@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, Spin } from 'antd';
-import * as zhCN from 'antd/locale/zh_CN';
+import zhCN from 'antd/locale/zh_CN';
 import { useAuthStore } from '@/stores/authStore';
 import MainLayout from '@/components/MainLayout';
 

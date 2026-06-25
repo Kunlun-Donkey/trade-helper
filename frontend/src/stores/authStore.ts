@@ -12,11 +12,6 @@ interface User {
   phone?: string;
 }
 
-interface LoginResponse {
-  token: string;
-  user: User;
-}
-
 interface RegisterData {
   username: string;
   password: string;
@@ -37,7 +32,7 @@ interface AuthState {
   setUser: (user: User) => void;
 }
 
-const useAuthStore = create<AuthState>()((set, get) => ({
+const useAuthStore = create<AuthState>()((set) => ({
   token: null,
   user: null,
   isLoggedIn: false,

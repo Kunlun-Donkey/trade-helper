@@ -1,4 +1,4 @@
-import { useEffect, useRef, RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import gsap from 'gsap';
 import { isAnimationsEnabled } from '@/utils/gsap';
 
@@ -19,7 +19,7 @@ export const usePageEnter = () => {
 };
 
 // 卡片悬浮 hook
-export const useCardHover = <T extends HTMLElement>(): RefObject<T> => {
+export const useCardHover = <T extends HTMLElement>(): RefObject<T | null> => {
   const ref = useRef<T>(null);
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export const useStatCardsEnter = (deps: any[] = []) => {
 };
 
 // 按钮点击回弹 hook
-export const useButtonClick = <T extends HTMLElement>(): RefObject<T> => {
+export const useButtonClick = <T extends HTMLElement>(): RefObject<T | null> => {
   const ref = useRef<T>(null);
 
   useEffect(() => {

@@ -87,7 +87,7 @@ export default function DashboardPage() {
         ]);
 
         if (b2bRes.status === 'fulfilled' && b2bRes.value) {
-          const b2b = b2bRes.value as Record<string, unknown>;
+          const b2b = b2bRes.value as unknown as Record<string, unknown>;
           setStats({
             newCustomers: (b2b.newCustomers as number) ?? 23,
             pendingFollowUp: (b2b.pendingFollowUp as number) ?? 15,
@@ -129,7 +129,7 @@ export default function DashboardPage() {
         }
 
         if (amazonRes.status === 'fulfilled' && amazonRes.value) {
-          const amz = amazonRes.value as Record<string, unknown>;
+          const amz = amazonRes.value as unknown as Record<string, unknown>;
           setAmazonStats({
             sales: (amz.sales as number) ?? 0,
             orders: (amz.orders as number) ?? 0,
@@ -140,7 +140,7 @@ export default function DashboardPage() {
         }
 
         if (todosRes.status === 'fulfilled' && todosRes.value) {
-          setTodos(todosRes.value as TodoItem[]);
+          setTodos(todosRes.value as unknown as TodoItem[]);
         } else {
           setTodos([
             { id: 1, type: 'follow', title: '跟进提醒', description: 'ABC Trading Co. 待跟进，上次联系3天前', time: '今天 14:00', urgent: true },
