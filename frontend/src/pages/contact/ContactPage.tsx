@@ -141,7 +141,7 @@ export default function ContactPage() {
       </Row>
 
       {/* 服务内容 */}
-      <Divider orientation="left">
+      <Divider>
         <Title level={4} style={{ margin: 0 }}>服务内容</Title>
       </Divider>
       <Row gutter={16} style={{ marginBottom: 32 }}>
@@ -166,7 +166,7 @@ export default function ContactPage() {
       </div>
 
       {/* 常见问题 */}
-      <Divider orientation="left">
+      <Divider>
         <Title level={4} style={{ margin: 0 }}>
           <QuestionCircleOutlined style={{ marginRight: 8 }} />
           常见问题
