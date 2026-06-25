@@ -10,6 +10,7 @@ import {
   AccountBookOutlined,
   BarChartOutlined,
   ToolOutlined,
+  CustomerServiceOutlined,
   UserOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
@@ -63,6 +64,11 @@ const menuItems: MenuProps['items'] = [
     key: '/toolbox',
     icon: <ToolOutlined />,
     label: '工具箱',
+  },
+  {
+    key: '/contact',
+    icon: <CustomerServiceOutlined />,
+    label: '联系代账',
   },
 ];
 

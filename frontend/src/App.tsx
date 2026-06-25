@@ -17,6 +17,7 @@ const CalculatorPage = lazy(() => import('@/pages/calculator/CalculatorPage'));
 const OrderListPage = lazy(() => import('@/pages/order/OrderListPage'));
 const AmazonPage = lazy(() => import('@/pages/amazon/AmazonPage'));
 const ToolboxPage = lazy(() => import('@/pages/toolbox/ToolboxPage'));
+const ContactPage = lazy(() => import('@/pages/contact/ContactPage'));
 
 function PageLoading() {
   return (
@@ -59,6 +60,7 @@ function App() {
             <Route path="order" element={<OrderListPage />} />
             <Route path="amazon" element={<AmazonPage />} />
             <Route path="toolbox" element={<ToolboxPage />} />
+            <Route path="contact" element={<ContactPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
