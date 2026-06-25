@@ -1,0 +1,103 @@
+/* ─── Reset & Base ─── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  color: #333;
+  background-color: #f0f2f5;
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ─── Ant Design Overrides ─── */
+.ant-layout {
+  min-height: 100vh;
+}
+
+.ant-layout-sider {
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.ant-layout-sider .ant-menu-dark {
+  background: transparent;
+}
+
+.ant-layout-header {
+  line-height: 64px;
+}
+
+/* Sidebar dark theme */
+.ant-layout-sider-dark {
+  background: linear-gradient(180deg, #001529 0%, #002140 100%);
+}
+
+.ant-menu-dark .ant-menu-item-selected {
+  background-color: #1677ff !important;
+  border-radius: 6px;
+}
+
+.ant-menu-dark .ant-menu-item:hover:not(.ant-menu-item-selected) {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Content area */
+.ant-layout-content {
+  background: #f5f5f5;
+}
+
+/* Cards */
+.ant-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Tables */
+.ant-table-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
