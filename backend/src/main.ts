@@ -10,12 +10,13 @@ async function bootstrap() {
   // Static files for uploads
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-  // CORS - allow Vercel frontend and localhost
+  // CORS - allow Vercel frontend, Railway, and localhost
   const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3001',
     process.env.FRONTEND_URL || '',
     /vercel\.app$/,
+    /railway\.app$/,
   ];
   app.enableCors({
     origin: allowedOrigins,
