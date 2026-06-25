@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: trade-helper-api
+    runtime: node
+    region: singapore
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_DATABASE
+        value: data/trade_helper.db
+    disk:
+      name: sqlite-disk
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
