@@ -69,6 +69,9 @@ function App() {
             <Route path="document" element={<DocumentListPage />} />
             <Route path="order" element={<OrderListPage />} />
             <Route path="amazon" element={<AmazonPage />} />
+            <Route path="calculator" element={<CalculatorPage />} />
+            <Route path="toolbox" element={<ToolboxPage />} />
+            <Route path="contact" element={<ContactPage />} />
           </Route>
 
           {/* Fallback */}

@@ -27,9 +27,9 @@ const { Header, Sider, Content } = Layout;
 
 // Public menu items (accessible without login)
 const publicMenuItems = [
-  { key: '/calculator', icon: <CalculatorOutlined />, label: '利润计算器' },
-  { key: '/toolbox', icon: <ToolOutlined />, label: '工具箱' },
-  { key: '/contact', icon: <CustomerServiceOutlined />, label: '联系代账' },
+  { key: '/app/calculator', icon: <CalculatorOutlined />, label: '利润计算器' },
+  { key: '/app/toolbox', icon: <ToolOutlined />, label: '工具箱' },
+  { key: '/app/contact', icon: <CustomerServiceOutlined />, label: '联系代账' },
 ];
 
 // Private menu items (require login)
