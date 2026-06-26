@@ -184,7 +184,7 @@ export default function CustomerListPage() {
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEdit(record)}>
             编辑
           </Button>
-          <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => navigate(`/crm/${record.id}`)}>
+          <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => navigate(`/app/crm/${record.id}`)}>
             详情
           </Button>
           <Popconfirm title="确认删除?" onConfirm={() => handleDelete(record.id)}>

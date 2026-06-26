@@ -35,7 +35,7 @@ export default function ContactPage() {
   const pageRef = usePageEnter();
 
   return (
-    <div ref={pageRef} style={{ padding: 24, maxWidth: 1000, margin: '0 auto' }}>
+    <div ref={pageRef} style={{ padding: '40px 24px', maxWidth: 1000, margin: '0 auto' }}>
       {/* 顶部标题 */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <Title level={2} style={{ marginBottom: 8 }}>专业代账服务</Title>

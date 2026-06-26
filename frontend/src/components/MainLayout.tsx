@@ -34,12 +34,12 @@ const publicMenuItems = [
 
 // Private menu items (require login)
 const privateMenuItems = [
-  { key: '/dashboard', icon: <DashboardOutlined />, label: '数据驾驶舱' },
-  { key: '/crm', icon: <TeamOutlined />, label: '客户管理' },
-  { key: '/product', icon: <ShoppingOutlined />, label: '产品库' },
-  { key: '/document', icon: <FileTextOutlined />, label: '单证中心' },
-  { key: '/order', icon: <AccountBookOutlined />, label: '订单台账' },
-  { key: '/amazon', icon: <BarChartOutlined />, label: '亚马逊报表' },
+  { key: '/app/dashboard', icon: <DashboardOutlined />, label: '数据驾驶舱' },
+  { key: '/app/crm', icon: <TeamOutlined />, label: '客户管理' },
+  { key: '/app/product', icon: <ShoppingOutlined />, label: '产品库' },
+  { key: '/app/document', icon: <FileTextOutlined />, label: '单证中心' },
+  { key: '/app/order', icon: <AccountBookOutlined />, label: '订单台账' },
+  { key: '/app/amazon', icon: <BarChartOutlined />, label: '亚马逊报表' },
 ];
 
 function MainLayout() {
@@ -87,15 +87,9 @@ function MainLayout() {
     setAnimEnabled(checked);
   };
 
-  const selectedKey = '/' + (location.pathname.split('/')[1] || 'calculator');
+  const selectedKey = '/app/' + (location.pathname.split('/')[2] || 'dashboard');
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
-    // Check if the route is private and user is not logged in
-    const privateRoutes = ['/dashboard', '/crm', '/product', '/document', '/order', '/amazon'];
-    if (!isLoggedIn && privateRoutes.some((r) => key.startsWith(r))) {
-      showLoginModal('login');
-      return;
-    }
     navigate(key);
   };
 

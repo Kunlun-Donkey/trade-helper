@@ -131,7 +131,7 @@ export default function CustomerDetailPage() {
   return (
     <div style={{ padding: 24 }}>
       <Space style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/crm')}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/app/crm')}>
           返回列表
         </Button>
       </Space>

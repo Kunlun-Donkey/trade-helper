@@ -4,14 +4,16 @@ import { ConfigProvider, Spin } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { useAuthStore } from '@/stores/authStore';
 import MainLayout from '@/components/MainLayout';
+import VisitorLayout from '@/components/visitor/VisitorLayout';
 import LoginModal from '@/components/LoginModal';
 
-// Public pages (no login required)
+// Visitor public pages
+const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const CalculatorPage = lazy(() => import('@/pages/calculator/CalculatorPage'));
 const ToolboxPage = lazy(() => import('@/pages/toolbox/ToolboxPage'));
 const ContactPage = lazy(() => import('@/pages/contact/ContactPage'));
 
-// Private pages (login required)
+// Logged-in private pages
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
 const CustomerListPage = lazy(() => import('@/pages/crm/CustomerListPage'));
 const CustomerDetailPage = lazy(() => import('@/pages/crm/CustomerDetailPage'));
@@ -32,7 +34,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, showLoginModal } = useAuthStore();
   if (!isLoggedIn) {
     showLoginModal('login');
-    return <Navigate to="/calculator" replace />;
+    return <Navigate to="/" replace />;
   }
   return <>{children}</>;
 }
@@ -42,27 +44,35 @@ function App() {
     <ConfigProvider locale={zhCN} theme={{ token: { colorPrimary: '#1677ff' } }}>
       <Suspense fallback={<PageLoading />}>
         <Routes>
-          {/* All routes use MainLayout (sidebar visible for everyone) */}
-          <Route path="/" element={<MainLayout />}>
-            {/* Default redirect */}
-            <Route index element={<Navigate to="/calculator" replace />} />
-
-            {/* Public routes - no login required */}
+          {/* Visitor public routes - marketing layout with top nav */}
+          <Route element={<VisitorLayout />}>
+            <Route index element={<LandingPage />} />
             <Route path="calculator" element={<CalculatorPage />} />
             <Route path="toolbox" element={<ToolboxPage />} />
             <Route path="contact" element={<ContactPage />} />
-
-            {/* Private routes - login required */}
-            <Route path="dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-            <Route path="crm" element={<ProtectedRoute><CustomerListPage /></ProtectedRoute>} />
-            <Route path="crm/:id" element={<ProtectedRoute><CustomerDetailPage /></ProtectedRoute>} />
-            <Route path="product" element={<ProtectedRoute><ProductListPage /></ProtectedRoute>} />
-            <Route path="document" element={<ProtectedRoute><DocumentListPage /></ProtectedRoute>} />
-            <Route path="order" element={<ProtectedRoute><OrderListPage /></ProtectedRoute>} />
-            <Route path="amazon" element={<ProtectedRoute><AmazonPage /></ProtectedRoute>} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/calculator" replace />} />
+          {/* Logged-in private routes - sidebar admin layout */}
+          <Route
+            path="/app"
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="crm" element={<CustomerListPage />} />
+            <Route path="crm/:id" element={<CustomerDetailPage />} />
+            <Route path="product" element={<ProductListPage />} />
+            <Route path="document" element={<DocumentListPage />} />
+            <Route path="order" element={<OrderListPage />} />
+            <Route path="amazon" element={<AmazonPage />} />
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
         {/* Global login modal */}

@@ -133,19 +133,29 @@ Best regards,
 
 export default function ToolboxPage() {
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={3} style={{ marginBottom: 24 }}>
-        工具箱
-      </Title>
-      <Tabs
-        defaultActiveKey="exchange"
-        items={[
-          { key: 'exchange', label: '汇率查询', children: <ExchangeRateTab /> },
-          { key: 'timezone', label: '时差查询', children: <TimezoneTab /> },
-          { key: 'convert', label: '单位换算', children: <UnitConverterTab /> },
-          { key: 'email', label: '邮件模板', children: <EmailTemplateTab /> },
-        ]}
-      />
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
+      {/* Hero */}
+      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <Title level={2} style={{ marginBottom: 8 }}>外贸工具箱</Title>
+        <Text style={{ fontSize: 16, color: '#666' }}>
+          汇率查询、时差计算、单位换算、邮件模板，外贸人的随身百宝箱
+        </Text>
+      </div>
+
+      {/* Toolbox Card */}
+      <Card
+        style={{ borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.06)', border: 'none' }}
+      >
+        <Tabs
+          defaultActiveKey="exchange"
+          items={[
+            { key: 'exchange', label: '汇率查询', children: <ExchangeRateTab /> },
+            { key: 'timezone', label: '时差查询', children: <TimezoneTab /> },
+            { key: 'convert', label: '单位换算', children: <UnitConverterTab /> },
+            { key: 'email', label: '邮件模板', children: <EmailTemplateTab /> },
+          ]}
+        />
+      </Card>
     </div>
   );
 }

@@ -1,21 +1,77 @@
 import { useState, useMemo } from 'react';
-import { Card, Tabs, Row, Col, InputNumber, Statistic, Typography, Divider } from 'antd';
+import { Card, Tabs, Row, Col, InputNumber, Statistic, Typography, Divider, Button, Alert } from 'antd';
+import { RocketOutlined, LockOutlined } from '@ant-design/icons';
+import useAuthStore from '@/stores/authStore';
 
 const { Title, Text } = Typography;
 
 export default function CalculatorPage() {
+  const { isLoggedIn, showLoginModal } = useAuthStore();
+
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={3} style={{ marginBottom: 24 }}>
-        计算器
-      </Title>
-      <Tabs
-        defaultActiveKey="b2b"
-        items={[
-          { key: 'b2b', label: 'B2B外贸计算器', children: <B2BCalculator /> },
-          { key: 'fba', label: '亚马逊FBA计算器', children: <FBACalculator /> },
-        ]}
-      />
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
+      {/* Hero */}
+      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <Title level={2} style={{ marginBottom: 8 }}>外贸利润计算器</Title>
+        <Text style={{ fontSize: 16, color: '#666' }}>
+          B2B外贸 + 亚马逊FBA 双模式，一键算清利润，告别手动计算出错
+        </Text>
+      </div>
+
+      {/* Calculator Card */}
+      <Card
+        style={{ borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.06)', border: 'none', marginBottom: 32 }}
+      >
+        <Tabs
+          defaultActiveKey="b2b"
+          items={[
+            { key: 'b2b', label: 'B2B外贸计算器', children: <B2BCalculator /> },
+            { key: 'fba', label: '亚马逊FBA计算器', children: <FBACalculator /> },
+          ]}
+        />
+      </Card>
+
+      {/* Notice for visitors */}
+      {!isLoggedIn && (
+        <Alert
+          type="info"
+          showIcon
+          icon={<LockOutlined />}
+          style={{ borderRadius: 12, marginBottom: 24 }}
+          message="免费使用提示"
+          description={
+            <div>
+              计算器数据仅保存在浏览器本地，清除缓存或换设备后数据将丢失。
+              <Button type="link" size="small" onClick={() => showLoginModal('register')} style={{ padding: 0 }}>
+                注册账号
+              </Button>
+              可永久保存客户、订单、产品数据到云端。
+            </div>
+          }
+        />
+      )}
+
+      {/* CTA for visitors */}
+      {!isLoggedIn && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: 16,
+            padding: '40px 24px',
+            textAlign: 'center',
+            color: '#fff',
+          }}
+        >
+          <RocketOutlined style={{ fontSize: 36, marginBottom: 16 }} />
+          <Title level={3} style={{ color: '#fff', marginBottom: 8 }}>解锁全部功能</Title>
+          <Text style={{ color: 'rgba(255,255,255,0.85)', display: 'block', marginBottom: 24 }}>
+            注册后可使用CRM客户管理、单证PDF导出、订单台账、亚马逊报表等全部功能
+          </Text>
+          <Button type="primary" size="large" style={{ height: 44, padding: '0 32px' }} onClick={() => showLoginModal('register')}>
+            免费注册
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
