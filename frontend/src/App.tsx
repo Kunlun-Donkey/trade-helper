@@ -39,13 +39,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function PublicOnly({ children }: { children: React.ReactNode }) {
+  const { isLoggedIn } = useAuthStore();
+  if (isLoggedIn) {
+    return <Navigate to="/app/dashboard" replace />;
+  }
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <ConfigProvider locale={zhCN} theme={{ token: { colorPrimary: '#1677ff' } }}>
       <Suspense fallback={<PageLoading />}>
         <Routes>
           {/* Visitor public routes - marketing layout with top nav */}
-          <Route element={<VisitorLayout />}>
+          <Route element={<PublicOnly><VisitorLayout /></PublicOnly>}>
             <Route index element={<LandingPage />} />
             <Route path="calculator" element={<CalculatorPage />} />
             <Route path="toolbox" element={<ToolboxPage />} />
