@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
-  Card, Tabs, Row, Col, InputNumber, Typography, List, Button, message, Select, Space,
+  Card, Tabs, Row, Col, InputNumber, Typography, List, Button, message, Select, Space, Spin, Tag,
 } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
+import { CopyOutlined, ReloadOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -161,10 +161,86 @@ export default function ToolboxPage() {
 }
 
 /* ═══════════════ Exchange Rate ═══════════════ */
+
+const CACHE_KEY = 'trade_helper_exchange_rates';
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+interface RateCache {
+  rates: Record<string, number>;
+  updateTime: string;
+  source: string;
+}
+
+function getCachedRates(): RateCache | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw) as RateCache & { timestamp: number };
+    if (Date.now() - cache.timestamp > CACHE_TTL) return null;
+    return cache;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedRates(rates: Record<string, number>, updateTime: string, source: string) {
+  localStorage.setItem(CACHE_KEY, JSON.stringify({ rates, updateTime, source, timestamp: Date.now() }));
+}
+
+const TARGET_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'HKD', 'AUD', 'CAD', 'KRW'];
+
 function ExchangeRateTab() {
-  const [rates] = useState<Record<string, number>>(DEFAULT_RATES);
+  const [rates, setRates] = useState<Record<string, number>>(DEFAULT_RATES);
+  const [updateTime, setUpdateTime] = useState<string>('');
+  const [source, setSource] = useState<string>('默认参考值');
+  const [loading, setLoading] = useState<boolean>(false);
   const [amount, setAmount] = useState<number>(1);
   const [fromCurrency, setFromCurrency] = useState<string>('USD');
+
+  const fetchRates = async () => {
+    setLoading(true);
+    try {
+      // Fetch rates with USD as base, then convert to CNY rates
+      const res = await fetch('https://open.er-api.com/v6/latest/USD');
+      const data = await res.json();
+      if (data.result === 'success') {
+        const usdRates = data.rates as Record<string, number>;
+        const usdToCny = usdRates.CNY;
+        const cnyRates: Record<string, number> = {};
+        for (const currency of TARGET_CURRENCIES) {
+          if (usdRates[currency]) {
+            cnyRates[currency] = usdToCny / usdRates[currency];
+          }
+        }
+        const updateTimeStr = data.time_last_update_utc || new Date().toUTCString();
+        setRates(cnyRates);
+        setUpdateTime(updateTimeStr);
+        setSource('ExchangeRate-API');
+        setCachedRates(cnyRates, updateTimeStr, 'ExchangeRate-API');
+      }
+    } catch {
+      // Use cached or default rates
+      const cached = getCachedRates();
+      if (cached) {
+        setRates(cached.rates);
+        setUpdateTime(cached.updateTime);
+        setSource(cached.source + ' (缓存)');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const cached = getCachedRates();
+    if (cached) {
+      setRates(cached.rates);
+      setUpdateTime(cached.updateTime);
+      setSource(cached.source + ' (缓存)');
+    } else {
+      fetchRates();
+    }
+  }, []);
 
   const converted = useMemo(() => {
     const rate = rates[fromCurrency] || 1;
@@ -172,57 +248,68 @@ function ExchangeRateTab() {
   }, [amount, fromCurrency, rates]);
 
   return (
-    <Row gutter={24}>
-      <Col xs={24} lg={12}>
-        <Card title="主要汇率 (兑人民币)">
-          <List
-            dataSource={Object.entries(rates)}
-            renderItem={([currency, rate]) => (
-              <List.Item>
-                <Text strong>1 {currency}</Text>
-                <Text>= {rate.toFixed(4)} CNY</Text>
-              </List.Item>
+    <div>
+      {/* Source & update time */}
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <Tag color="blue">{source}</Tag>
+        {updateTime && <Text type="secondary" style={{ fontSize: 12 }}>更新时间: {updateTime}</Text>}
+        <Button size="small" icon={<ReloadOutlined />} loading={loading} onClick={fetchRates}>
+          刷新
+        </Button>
+      </div>
+
+      <Row gutter={24}>
+        <Col xs={24} lg={12}>
+          <Card title="主要汇率 (兑人民币)" extra={<Text type="secondary" style={{ fontSize: 12 }}>前一交易日</Text>}>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: 24 }}><Spin /></div>
+            ) : (
+              <List
+                dataSource={Object.entries(rates)}
+                renderItem={([currency, rate]) => (
+                  <List.Item>
+                    <Text strong>1 {currency}</Text>
+                    <Text>= {rate.toFixed(4)} CNY</Text>
+                  </List.Item>
+                )}
+              />
             )}
-          />
-        </Card>
-      </Col>
-      <Col xs={24} lg={12}>
-        <Card title="汇率换算器">
-          <Space direction="vertical" style={{ width: '100%' }} size="large">
-            <div>
-              <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>
-                金额
-              </Text>
-              <InputNumber
-                value={amount}
-                onChange={(v) => setAmount(v || 0)}
-                min={0}
-                precision={2}
-                style={{ width: '100%' }}
-                size="large"
-              />
-            </div>
-            <div>
-              <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>
-                币种
-              </Text>
-              <Select
-                value={fromCurrency}
-                onChange={setFromCurrency}
-                style={{ width: '100%' }}
-                size="large"
-                options={Object.keys(rates).map((c) => ({ label: c, value: c }))}
-              />
-            </div>
-            <Card style={{ background: '#f6ffed', borderColor: '#b7eb8f' }}>
-              <Title level={4} style={{ margin: 0, color: '#52c41a' }}>
-                {amount} {fromCurrency} = {converted.toFixed(2)} CNY
-              </Title>
-            </Card>
-          </Space>
-        </Card>
-      </Col>
-    </Row>
+          </Card>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Card title="汇率换算器">
+            <Space direction="vertical" style={{ width: '100%' }} size="large">
+              <div>
+                <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>金额</Text>
+                <InputNumber
+                  value={amount}
+                  onChange={(v) => setAmount(v || 0)}
+                  min={0}
+                  precision={2}
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </div>
+              <div>
+                <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>币种</Text>
+                <Select
+                  value={fromCurrency}
+                  onChange={setFromCurrency}
+                  style={{ width: '100%' }}
+                  size="large"
+                  options={Object.keys(rates).map((c) => ({ label: c, value: c }))}
+                />
+              </div>
+              <Card style={{ background: '#f6ffed', borderColor: '#b7eb8f' }}>
+                <Title level={4} style={{ margin: 0, color: '#52c41a' }}>
+                  {amount} {fromCurrency} = {converted.toFixed(2)} CNY
+                </Title>
+              </Card>
+            </Space>
+          </Card>
+        </Col>
+      </Row>
+    </div>
   );
 }
 
