@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal, Form, Input, Button, Tabs, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import useAuthStore from '@/stores/authStore';
 
 export default function LoginModal() {
   const { loginModalVisible, loginModalTab, hideLoginModal, login, register, showLoginModal } = useAuthStore();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(loginModalTab);
   const [loading, setLoading] = useState(false);
   const [loginForm] = Form.useForm();
@@ -34,6 +36,7 @@ export default function LoginModal() {
       message.success('登录成功');
       hideLoginModal();
       loginForm.resetFields();
+      navigate('/app/dashboard');
     } catch (error) {
       message.error(error instanceof Error ? error.message : '登录失败');
     } finally {
