@@ -10,7 +10,11 @@ import {
   UseGuards,
   Request,
   ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CustomerService } from './customer.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
@@ -21,6 +25,21 @@ import { success } from '../../common/response.util';
 @UseGuards(JwtAuthGuard)
 export class CustomerController {
   constructor(private customerService: CustomerService) {}
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  async importCustomers(@Request() req, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('请选择文件');
+    }
+    const allowedExts = ['.xlsx', '.xls', '.csv'];
+    const ext = file.originalname.toLowerCase().match(/\.\w+$/)?.[0] || '';
+    if (!allowedExts.includes(ext)) {
+      throw new BadRequestException('仅支持 .xlsx, .xls, .csv 格式');
+    }
+    const result = await this.customerService.bulkImport(req.user.id, file);
+    return success(result, '导入完成');
+  }
 
   @Post()
   async create(@Request() req, @Body() dto: CreateCustomerDto) {

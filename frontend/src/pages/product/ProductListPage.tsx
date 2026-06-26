@@ -7,6 +7,8 @@ import {
   PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, UploadOutlined,
 } from '@ant-design/icons';
 import { productApi } from '../../services/api';
+import { getBackendUrl } from '../../utils/request';
+import type { UploadFile, UploadProps } from 'antd';
 
 const { Search } = Input;
 
@@ -36,6 +38,7 @@ export default function ProductListPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [form] = Form.useForm();
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -109,13 +112,44 @@ export default function ProductListPage() {
   const openEdit = (record: Product) => {
     setEditing(record);
     form.setFieldsValue(record);
+    if (record.imageUrl) {
+      setFileList([{
+        uid: '-1',
+        name: 'image',
+        status: 'done',
+        url: getBackendUrl(record.imageUrl),
+      }]);
+    } else {
+      setFileList([]);
+    }
     setModalOpen(true);
   };
 
   const openCreate = () => {
     setEditing(null);
     form.resetFields();
+    setFileList([]);
     setModalOpen(true);
+  };
+
+  const handleUpload: UploadProps['customRequest'] = async (options) => {
+    const { file, onSuccess, onError } = options;
+    try {
+      const res = (await productApi.uploadImage(file as File)) as unknown as { url: string };
+      const url = res?.url || '';
+      form.setFieldValue('imageUrl', url);
+      setFileList([{
+        uid: '-1',
+        name: (file as File).name,
+        status: 'done',
+        url: getBackendUrl(url),
+      }]);
+      onSuccess?.(res);
+      message.success('图片上传成功');
+    } catch {
+      onError?.(new Error('上传失败'));
+      message.error('图片上传失败');
+    }
   };
 
   const columns = [
@@ -123,7 +157,7 @@ export default function ProductListPage() {
       title: '图片', dataIndex: 'imageUrl', key: 'imageUrl', width: 80,
       render: (url: string) =>
         url ? (
-          <Image src={url} width={48} height={48} style={{ objectFit: 'cover', borderRadius: 4 }} />
+          <Image src={getBackendUrl(url)} width={48} height={48} style={{ objectFit: 'cover', borderRadius: 4 }} />
         ) : (
           <div
             style={{
@@ -251,25 +285,22 @@ export default function ProductListPage() {
             </Form.Item>
             <Form.Item name="imageUrl" label="产品图片">
               <Upload
-                name="file"
                 listType="picture-card"
                 maxCount={1}
                 accept="image/*"
-                beforeUpload={async (file) => {
-                  try {
-                    const res = (await productApi.uploadImage(file)) as unknown as { url: string };
-                    form.setFieldValue('imageUrl', res?.url || '');
-                    message.success('图片上传成功');
-                  } catch {
-                    message.info('图片已选择（上传功能待后端支持）');
-                  }
-                  return false;
+                fileList={fileList}
+                customRequest={handleUpload}
+                onRemove={() => {
+                  setFileList([]);
+                  form.setFieldValue('imageUrl', '');
                 }}
               >
-                <div>
-                  <UploadOutlined />
-                  <div style={{ marginTop: 8 }}>上传图片</div>
-                </div>
+                {fileList.length < 1 && (
+                  <div>
+                    <UploadOutlined />
+                    <div style={{ marginTop: 8 }}>上传图片</div>
+                  </div>
+                )}
               </Upload>
             </Form.Item>
           </Form>

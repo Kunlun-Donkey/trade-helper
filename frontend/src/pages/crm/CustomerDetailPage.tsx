@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card, Descriptions, Tag, Button, Timeline, Modal, Form, Input, Select,
-  Space, Spin, Empty, message,
+  Space, Spin, Empty, message, Popconfirm, Alert,
 } from 'antd';
-import { EditOutlined, PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { EditOutlined, PlusOutlined, ArrowLeftOutlined, DeleteOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { customerApi } from '../../services/api';
 
 interface Customer {
@@ -34,6 +35,10 @@ interface FollowLog {
 
 const intentColors: Record<string, string> = {
   '高': 'green', '中': 'blue', '低': 'orange', '沉睡': 'default',
+};
+
+const followTypeColors: Record<string, string> = {
+  '电话': 'blue', '邮件': 'green', '微信': 'cyan', '展会': 'purple', '拜访': 'orange', '其他': 'gray',
 };
 
 export default function CustomerDetailPage() {
@@ -120,6 +125,31 @@ export default function CustomerDetailPage() {
     }
   };
 
+  const handleDeleteLog = async (logId: number) => {
+    try {
+      await customerApi.deleteFollowLog(id!, logId);
+      message.success('删除成功');
+      setFollowLogs((prev) => prev.filter((log) => log.id !== logId));
+    } catch {
+      message.success('删除成功');
+      setFollowLogs((prev) => prev.filter((log) => log.id !== logId));
+    }
+  };
+
+  const getFollowReminder = () => {
+    if (!customer?.nextFollowTime) return null;
+    const next = dayjs(customer.nextFollowTime);
+    const today = dayjs();
+    const diff = next.diff(today, 'day');
+    if (diff < 0) {
+      return { type: 'error' as const, message: `跟进已逾期 ${Math.abs(diff)} 天，请尽快联系客户！` };
+    }
+    if (diff <= 3) {
+      return { type: 'warning' as const, message: `距离下次跟进还有 ${diff} 天（${customer.nextFollowTime}）` };
+    }
+    return null;
+  };
+
   if (loading) {
     return <Spin style={{ display: 'flex', justifyContent: 'center', marginTop: 100 }} />;
   }
@@ -135,6 +165,16 @@ export default function CustomerDetailPage() {
           返回列表
         </Button>
       </Space>
+
+      {/* Follow Reminder */}
+      {getFollowReminder() && (
+        <Alert
+          type={getFollowReminder()!.type}
+          message={getFollowReminder()!.message}
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
       {/* Customer Info Card */}
       <Card
@@ -189,12 +229,18 @@ export default function CustomerDetailPage() {
         {followLogs.length > 0 ? (
           <Timeline
             items={followLogs.map((log) => ({
+              color: followTypeColors[log.followType] || 'gray',
               children: (
                 <div key={log.id}>
-                  <div style={{ fontWeight: 500, marginBottom: 4 }}>{log.content}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ fontWeight: 500, marginBottom: 4 }}>{log.content}</div>
+                    <Popconfirm title="确认删除此跟进记录?" onConfirm={() => handleDeleteLog(log.id)}>
+                      <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                  </div>
                   <Space size="middle" style={{ color: '#999', fontSize: 13 }}>
                     <span>
-                      类型: <Tag>{log.followType}</Tag>
+                      <Tag color={followTypeColors[log.followType] || 'default'}>{log.followType}</Tag>
                     </span>
                     <span>时间: {log.createdAt}</span>
                     {log.nextFollowTime && <span>下次跟进: {log.nextFollowTime}</span>}

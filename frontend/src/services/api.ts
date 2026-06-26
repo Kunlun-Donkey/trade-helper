@@ -24,6 +24,15 @@ export const customerApi = {
     request.get(`/customer/${customerId}/follow-log`),
   createFollowLog: (customerId: number | string, data: Record<string, unknown>) =>
     request.post(`/customer/${customerId}/follow-log`, data),
+  deleteFollowLog: (customerId: number | string, logId: number | string) =>
+    request.delete(`/customer/${customerId}/follow-log/${logId}`),
+  importCustomers: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request.post('/customer/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 /* ────────────── Product ────────────── */

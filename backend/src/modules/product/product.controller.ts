@@ -14,6 +14,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { BadRequestException } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -72,8 +73,15 @@ export class ProductController {
   }
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('请选择文件');
+    }
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedMimes.includes(file.mimetype)) {
+      throw new BadRequestException('仅支持 JPG/PNG/GIF/WEBP 格式图片');
+    }
     const result = await this.productService.uploadImage(file);
     return success(result, '上传成功');
   }

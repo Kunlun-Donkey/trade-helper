@@ -1,6 +1,14 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+/** 将后端返回的相对路径(如 /uploads/xxx.jpg)拼接为完整URL */
+export function getBackendUrl(path: string): string {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  const base = API_BASE_URL.replace(/\/api\/?$/, '');
+  return `${base}${path}`;
+}
 
 const request = axios.create({
   baseURL: API_BASE_URL,

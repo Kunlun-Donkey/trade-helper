@@ -18,12 +18,14 @@ import {
 import {
   PlusOutlined,
   UploadOutlined,
+  DownloadOutlined,
   SearchOutlined,
   EditOutlined,
   DeleteOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import { customerApi } from '../../services/api';
 
 const { Search } = Input;
@@ -64,6 +66,11 @@ export default function CustomerListPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    total: number; success: number; failed: number;
+    errors: { row: number; message: string }[];
+  } | null>(null);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form] = Form.useForm();
 
@@ -322,22 +329,76 @@ export default function CustomerListPage() {
         <Modal
           title="批量导入客户"
           open={importModalOpen}
-          onCancel={() => setImportModalOpen(false)}
+          onCancel={() => { setImportModalOpen(false); setImportResult(null); }}
           footer={null}
           destroyOnClose
+          width={560}
         >
           <div style={{ padding: '16px 0' }}>
+            <Button
+              icon={<DownloadOutlined />}
+              style={{ marginBottom: 16 }}
+              onClick={() => {
+                const headers = [['公司名', '国家', '联系人', '邮箱', 'WhatsApp', '来源', '意向等级', '客户类型', '主营产品', '备注']];
+                const ws = XLSX.utils.aoa_to_sheet(headers);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, '客户导入模板');
+                XLSX.writeFile(wb, '客户导入模板.xlsx');
+              }}
+            >
+              下载导入模板
+            </Button>
+
             <Upload.Dragger
               name="file"
               accept=".xlsx,.xls,.csv"
               multiple={false}
-              beforeUpload={() => false}
               showUploadList={false}
+              beforeUpload={async (file) => {
+                setImportLoading(true);
+                setImportResult(null);
+                try {
+                  const res = (await customerApi.importCustomers(file)) as unknown as {
+                    total: number; success: number; failed: number;
+                    errors: { row: number; message: string }[];
+                  };
+                  setImportResult(res);
+                  if (res.success > 0) {
+                    message.success(`成功导入 ${res.success} 条客户`);
+                    fetchData();
+                  }
+                } catch {
+                  message.error('导入失败，请检查文件格式');
+                } finally {
+                  setImportLoading(false);
+                }
+                return false;
+              }}
+              disabled={importLoading}
             >
               <p className="ant-upload-drag-icon"><UploadOutlined /></p>
-              <p className="ant-upload-text">点击或拖拽Excel文件到此区域</p>
-              <p className="ant-upload-hint">支持 .xlsx, .xls, .csv 格式</p>
+              <p className="ant-upload-text">{importLoading ? '导入中...' : '点击或拖拽Excel文件到此区域'}</p>
+              <p className="ant-upload-hint">支持 .xlsx, .xls, .csv 格式，首行为列头</p>
             </Upload.Dragger>
+
+            {importResult && (
+              <div style={{ marginTop: 16, padding: 12, background: '#f6f6f6', borderRadius: 6 }}>
+                <p style={{ margin: '0 0 8px' }}>
+                  导入结果：共 {importResult.total} 条，
+                  <span style={{ color: '#52c41a' }}>成功 {importResult.success} 条</span>
+                  {importResult.failed > 0 && (
+                    <span style={{ color: '#ff4d4f' }}>，失败 {importResult.failed} 条</span>
+                  )}
+                </p>
+                {importResult.errors.length > 0 && (
+                  <div style={{ maxHeight: 150, overflow: 'auto', fontSize: 12, color: '#ff4d4f' }}>
+                    {importResult.errors.map((err, i) => (
+                      <div key={i}>第{err.row}行：{err.message}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </Modal>
       </div>

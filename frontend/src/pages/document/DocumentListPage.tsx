@@ -7,6 +7,7 @@ import {
   PlusOutlined, EyeOutlined, DeleteOutlined, FilePdfOutlined, MinusCircleOutlined,
 } from '@ant-design/icons';
 import { documentApi } from '../../services/api';
+import { generateInvoicePdf } from '../../utils/pdfGenerator';
 import dayjs from 'dayjs';
 
 interface DocumentItem {
@@ -133,12 +134,31 @@ export default function DocumentListPage() {
     }
   };
 
-  const handleDownloadPdf = async (id: number) => {
+  const handleDownloadPdf = async (record: DocRecord) => {
     try {
-      await documentApi.generatePdf(id);
-      message.success('PDF生成成功');
+      // Try to get full data from API first
+      let docData = record;
+      try {
+        const res = (await documentApi.getById(record.id)) as unknown as DocRecord;
+        if (res) docData = res;
+      } catch {
+        // Use the record data from list
+      }
+      generateInvoicePdf({
+        docNo: docData.docNo,
+        type: docData.type,
+        customerName: docData.customerName,
+        tradeTerms: docData.tradeTerms,
+        paymentTerms: docData.paymentTerms,
+        deliveryDate: docData.deliveryDate,
+        currency: docData.currency,
+        totalAmount: docData.totalAmount,
+        items: docData.items || [],
+        createdAt: docData.createdAt,
+      });
+      message.success('PDF已生成并下载');
     } catch {
-      message.info('PDF下载功能待后端支持');
+      message.error('PDF生成失败');
     }
   };
 
@@ -174,7 +194,7 @@ export default function DocumentListPage() {
             type="link"
             size="small"
             icon={<FilePdfOutlined />}
-            onClick={() => handleDownloadPdf(record.id)}
+            onClick={() => handleDownloadPdf(record)}
           >
             导出PDF
           </Button>
