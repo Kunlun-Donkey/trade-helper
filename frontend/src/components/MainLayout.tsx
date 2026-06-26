@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Layout, Menu, Dropdown, Avatar, Space, Switch, theme } from 'antd';
+import { Layout, Menu, Dropdown, Avatar, Space, Switch, Button, theme } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   DashboardOutlined,
@@ -16,6 +16,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ThunderboltOutlined,
+  LoginOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import gsap from 'gsap';
@@ -24,52 +25,21 @@ import { setAnimationsEnabled, isAnimationsEnabled } from '@/utils/gsap';
 
 const { Header, Sider, Content } = Layout;
 
-const menuItems: MenuProps['items'] = [
-  {
-    key: '/dashboard',
-    icon: <DashboardOutlined />,
-    label: '数据驾驶舱',
-  },
-  {
-    key: '/crm',
-    icon: <TeamOutlined />,
-    label: '客户管理',
-  },
-  {
-    key: '/product',
-    icon: <ShoppingOutlined />,
-    label: '产品库',
-  },
-  {
-    key: '/document',
-    icon: <FileTextOutlined />,
-    label: '单证中心',
-  },
-  {
-    key: '/calculator',
-    icon: <CalculatorOutlined />,
-    label: '利润计算器',
-  },
-  {
-    key: '/order',
-    icon: <AccountBookOutlined />,
-    label: '订单台账',
-  },
-  {
-    key: '/amazon',
-    icon: <BarChartOutlined />,
-    label: '亚马逊报表',
-  },
-  {
-    key: '/toolbox',
-    icon: <ToolOutlined />,
-    label: '工具箱',
-  },
-  {
-    key: '/contact',
-    icon: <CustomerServiceOutlined />,
-    label: '联系代账',
-  },
+// Public menu items (accessible without login)
+const publicMenuItems: MenuProps['items'] = [
+  { key: '/calculator', icon: <CalculatorOutlined />, label: '利润计算器' },
+  { key: '/toolbox', icon: <ToolOutlined />, label: '工具箱' },
+  { key: '/contact', icon: <CustomerServiceOutlined />, label: '联系代账' },
+];
+
+// Private menu items (require login)
+const privateMenuItems: MenuProps['items'] = [
+  { key: '/dashboard', icon: <DashboardOutlined />, label: '数据驾驶舱' },
+  { key: '/crm', icon: <TeamOutlined />, label: '客户管理' },
+  { key: '/product', icon: <ShoppingOutlined />, label: '产品库' },
+  { key: '/document', icon: <FileTextOutlined />, label: '单证中心' },
+  { key: '/order', icon: <AccountBookOutlined />, label: '订单台账' },
+  { key: '/amazon', icon: <BarChartOutlined />, label: '亚马逊报表' },
 ];
 
 function MainLayout() {
@@ -78,10 +48,15 @@ function MainLayout() {
   const contentRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuthStore();
+  const { user, isLoggedIn, logout, showLoginModal } = useAuthStore();
   const { token: themeToken } = theme.useToken();
 
-  // 页面切换入场动画
+  // Build menu items based on login status
+  const menuItems: MenuProps['items'] = isLoggedIn
+    ? [...privateMenuItems, ...publicMenuItems]
+    : publicMenuItems;
+
+  // Page transition animation
   useEffect(() => {
     if (!contentRef.current || !isAnimationsEnabled()) return;
     gsap.fromTo(
@@ -91,54 +66,48 @@ function MainLayout() {
     );
   }, [location.pathname]);
 
-  // 侧边栏菜单动画
+  // Sidebar menu animation
   useEffect(() => {
     if (!isAnimationsEnabled()) return;
     const timer = setTimeout(() => {
-      const menuItems = document.querySelectorAll('.ant-menu-item');
-      if (menuItems.length > 0) {
+      const items = document.querySelectorAll('.ant-menu-item');
+      if (items.length > 0) {
         gsap.fromTo(
-          menuItems,
+          items,
           { opacity: 0, x: -12 },
           { opacity: 1, x: 0, duration: 0.25, stagger: 0.04, ease: 'power2.out' }
         );
       }
     }, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isLoggedIn]);
 
   const handleAnimToggle = (checked: boolean) => {
     setAnimationsEnabled(checked);
     setAnimEnabled(checked);
   };
 
-  const selectedKey = '/' + (location.pathname.split('/')[1] || 'dashboard');
+  const selectedKey = '/' + (location.pathname.split('/')[1] || 'calculator');
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
+    // Check if the route is private and user is not logged in
+    const privateRoutes = ['/dashboard', '/crm', '/product', '/document', '/order', '/amazon'];
+    if (!isLoggedIn && privateRoutes.some((r) => key.startsWith(r))) {
+      showLoginModal('login');
+      return;
+    }
     navigate(key);
   };
 
   const userMenuItems: MenuProps['items'] = [
-    {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: '个人信息',
-    },
+    { key: 'profile', icon: <UserOutlined />, label: '个人中心' },
     { type: 'divider' },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: '退出登录',
-      danger: true,
-    },
+    { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', danger: true },
   ];
 
   const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
-    if (key === 'logout') {
-      logout();
-    } else if (key === 'profile') {
-      navigate('/profile');
-    }
+    if (key === 'logout') logout();
+    else if (key === 'profile') navigate('/profile');
   };
 
   return (
@@ -214,29 +183,35 @@ function MainLayout() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#666' }}>
               <ThunderboltOutlined style={{ color: animEnabled ? '#faad14' : '#ccc' }} />
-              <Switch
-                size="small"
-                checked={animEnabled}
-                onChange={handleAnimToggle}
-              />
+              <Switch size="small" checked={animEnabled} onChange={handleAnimToggle} />
               <span>动效</span>
             </div>
           </div>
-          <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} placement="bottomRight">
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} />
-              <span style={{ color: '#333', fontSize: 14 }}>
-                {user?.nickname || user?.username || '用户'}
-              </span>
+
+          {/* Right side: login buttons or user avatar */}
+          {isLoggedIn ? (
+            <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} placement="bottomRight">
+              <Space style={{ cursor: 'pointer' }}>
+                <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} />
+                <span style={{ color: '#333', fontSize: 14 }}>
+                  {user?.nickname || user?.username || '用户'}
+                </span>
+              </Space>
+            </Dropdown>
+          ) : (
+            <Space size={12}>
+              <Button type="text" icon={<LoginOutlined />} onClick={() => showLoginModal('login')}>
+                登录
+              </Button>
+              <Button type="primary" onClick={() => showLoginModal('register')}>
+                注册
+              </Button>
             </Space>
-          </Dropdown>
+          )}
         </Header>
         <Content
           ref={contentRef}
-          style={{
-            margin: 24,
-            minHeight: 280,
-          }}
+          style={{ margin: 24, minHeight: 280 }}
         >
           <Outlet />
         </Content>

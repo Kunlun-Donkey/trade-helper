@@ -25,11 +25,15 @@ interface AuthState {
   user: User | null;
   isLoggedIn: boolean;
   loading: boolean;
+  loginModalVisible: boolean;
+  loginModalTab: 'login' | 'register';
   login: (username: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   loadFromStorage: () => void;
   setUser: (user: User) => void;
+  showLoginModal: (tab?: 'login' | 'register') => void;
+  hideLoginModal: () => void;
 }
 
 const useAuthStore = create<AuthState>()((set) => ({
@@ -37,6 +41,8 @@ const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   isLoggedIn: false,
   loading: false,
+  loginModalVisible: false,
+  loginModalTab: 'login',
 
   login: async (username: string, password: string) => {
     set({ loading: true });
@@ -72,7 +78,7 @@ const useAuthStore = create<AuthState>()((set) => ({
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     set({ token: null, user: null, isLoggedIn: false });
-    window.location.href = '/login';
+    window.location.href = '/';
   },
 
   loadFromStorage: () => {
@@ -92,6 +98,14 @@ const useAuthStore = create<AuthState>()((set) => ({
   setUser: (user: User) => {
     set({ user });
     localStorage.setItem('user', JSON.stringify(user));
+  },
+
+  showLoginModal: (tab = 'login') => {
+    set({ loginModalVisible: true, loginModalTab: tab });
+  },
+
+  hideLoginModal: () => {
+    set({ loginModalVisible: false });
   },
 }));
 
