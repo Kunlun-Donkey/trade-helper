@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
-  Card, Upload, Select, Table, Tag, Button, Space, Modal, Spin, Empty, message, Popconfirm,
+  Card, Upload, Select, Table, Tag, Button, Space, Drawer, Spin, Empty, message, Popconfirm,
 } from 'antd';
 import { InboxOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import { amazonApi } from '../../services/api';
+import ReportAnalysis from './ReportAnalysis';
 
 interface AmazonReport {
   id: number;
@@ -33,9 +34,9 @@ export default function AmazonPage() {
   const [reports, setReports] = useState<AmazonReport[]>([]);
   const [reportType, setReportType] = useState<string>('订单报表');
   const [uploading, setUploading] = useState(false);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
   const [viewData, setViewData] = useState<Record<string, unknown>[]>([]);
-  const [viewTitle, setViewTitle] = useState('');
+  const [viewReport, setViewReport] = useState<AmazonReport | null>(null);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -136,19 +137,20 @@ export default function AmazonPage() {
   };
 
   const handleView = async (record: AmazonReport) => {
-    setViewTitle(record.fileName);
+    setViewReport(record);
     if (record.data && record.data.length > 0) {
       setViewData(record.data);
-      setViewModalOpen(true);
+      setViewDrawerOpen(true);
       return;
     }
     try {
-      const res = (await amazonApi.getData(record.id)) as unknown as Record<string, unknown>[];
-      setViewData(Array.isArray(res) ? res : []);
-      setViewModalOpen(true);
+      const res = (await amazonApi.getData(record.id)) as unknown as { data?: Record<string, unknown>[] } | Record<string, unknown>[];
+      const parsed = Array.isArray(res) ? res : (res as { data?: Record<string, unknown>[] }).data || [];
+      setViewData(parsed);
+      setViewDrawerOpen(true);
     } catch {
       setViewData([]);
-      setViewModalOpen(true);
+      setViewDrawerOpen(true);
     }
   };
 
@@ -180,16 +182,6 @@ export default function AmazonPage() {
       ),
     },
   ];
-
-  const viewColumns =
-    viewData.length > 0
-      ? Object.keys(viewData[0]).map((key) => ({
-          title: key,
-          dataIndex: key,
-          key,
-          ellipsis: true,
-        }))
-      : [];
 
   return (
     <Spin spinning={loading}>
@@ -234,26 +226,22 @@ export default function AmazonPage() {
           )}
         </Card>
 
-        {/* View Data Modal */}
-        <Modal
-          title={`查看报表: ${viewTitle}`}
-          open={viewModalOpen}
-          onCancel={() => setViewModalOpen(false)}
-          footer={null}
-          width={900}
+        {/* Report Analysis Drawer */}
+        <Drawer
+          title={`报表分析: ${viewReport?.fileName || ''}`}
+          open={viewDrawerOpen}
+          onClose={() => setViewDrawerOpen(false)}
+          width={1000}
+          destroyOnClose
         >
-          {viewData.length > 0 ? (
-            <Table
-              columns={viewColumns}
-              dataSource={viewData.map((row, i) => ({ ...row, key: i }))}
-              size="small"
-              scroll={{ x: true }}
-              pagination={{ pageSize: 20 }}
+          {viewReport && (
+            <ReportAnalysis
+              reportType={viewReport.reportType}
+              data={viewData}
+              fileName={viewReport.fileName}
             />
-          ) : (
-            <Empty description="暂无数据" />
           )}
-        </Modal>
+        </Drawer>
       </div>
     </Spin>
   );
